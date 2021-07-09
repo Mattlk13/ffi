@@ -50,6 +50,19 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
   else
     $defs << "-DHAVE_FFI_PREP_CIF_VAR"
     $defs << "-DUSE_INTERNAL_LIBFFI"
+
+    # Ensure libffi symbols aren't exported when using static libffi.
+    # This is to avoid interference with other gems like fiddle.
+    # See https://github.com/ffi/ffi/issues/835
+    append_ldflags "-Wl,--exclude-libs,ALL"
+  end
+
+  # Some linux archs need explicit linking to pthread, see https://github.com/ffi/ffi/issues/893
+  append_ldflags "-pthread"
+
+  ffi_alloc_default = RbConfig::CONFIG['host_os'] =~ /darwin/i && RbConfig::CONFIG['host'] =~ /arm|aarch64/i
+  if enable_config('libffi-alloc', ffi_alloc_default)
+    $defs << "-DUSE_FFI_ALLOC"
   end
 
   $defs << "-DHAVE_EXTCONF_H" if $defs.empty? # needed so create_header works
@@ -60,13 +73,16 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
   unless system_libffi
     File.open("Makefile", "a") do |mf|
       mf.puts "LIBFFI_HOST=--host=#{RbConfig::CONFIG['host_alias']}" if RbConfig::CONFIG.has_key?("host_alias")
-      if RbConfig::CONFIG['host_os'].downcase =~ /darwin/
+      if RbConfig::CONFIG['host_os'] =~ /darwin/i
+        if RbConfig::CONFIG['host'] =~ /arm|aarch64/i
+          mf.puts "LIBFFI_HOST=--host=aarch64-apple-#{RbConfig::CONFIG['host_os']}"
+        end
         mf.puts "include ${srcdir}/libffi.darwin.mk"
-      elsif RbConfig::CONFIG['host_os'].downcase =~ /bsd/
+      elsif RbConfig::CONFIG['host_os'] =~ /bsd/i
         mf.puts '.include "${srcdir}/libffi.bsd.mk"'
-      elsif RbConfig::CONFIG['host_os'].downcase =~ /mswin64/
+      elsif RbConfig::CONFIG['host_os'] =~ /mswin64/i
         mf.puts '!include $(srcdir)/libffi.vc64.mk'
-      elsif RbConfig::CONFIG['host_os'].downcase =~ /mswin32/
+      elsif RbConfig::CONFIG['host_os'] =~ /mswin32/i
         mf.puts '!include $(srcdir)/libffi.vc.mk'
       else
         mf.puts "include ${srcdir}/libffi.mk"

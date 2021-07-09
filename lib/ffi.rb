@@ -1,5 +1,4 @@
-if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
-  Object.send(:remove_const, :FFI) if defined?(::FFI)
+if RUBY_ENGINE == 'ruby'
   begin
     require RUBY_VERSION.split('.')[0, 2].join('.') + '/ffi_c'
   rescue Exception
@@ -8,7 +7,7 @@ if RUBY_ENGINE == 'ruby' || RUBY_ENGINE == 'rbx'
 
   require 'ffi/ffi'
 
-elsif RUBY_ENGINE == 'jruby' && (RUBY_ENGINE_VERSION.split('.').map(&:to_i) <=> [9, 3]) >= 0
+elsif RUBY_ENGINE == 'jruby' && (RUBY_ENGINE_VERSION.split('.').map(&:to_i) <=> [9, 2, 20]) >= 0
   JRuby::Util.load_ext("org.jruby.ext.ffi.FFIService")
   require 'ffi/ffi'
 

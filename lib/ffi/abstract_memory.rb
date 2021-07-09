@@ -1,6 +1,5 @@
 #
-# Copyright (C) 2008, 2009 Wayne Meissner
-# Copyright (C) 2009 Luc Heinrich
+# Copyright (C) 2020 Lars Kanis
 #
 # This file is part of ruby-ffi.
 #
@@ -27,43 +26,19 @@
 # SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.#
+
 
 module FFI
-  class VariadicInvoker
-    def call(*args, &block)
-      param_types = Array.new(@fixed)
-      param_values = Array.new
-      @fixed.each_with_index do |t, i|
-        param_values << args[i]
-      end
-      i = @fixed.length
-      while i < args.length
-        param_types << FFI.find_type(args[i], @type_map)
-        param_values << args[i + 1]
-        i += 2
-      end
-      invoke(param_types, param_values, &block)
-    end
+  class AbstractMemory
+    LONG_MAX = FFI::Pointer.new(1).size
+    private_constant :LONG_MAX
 
+    # Return +true+ if +self+ has a size limit.
     #
-    # Attach the invoker to module +mod+ as +mname+
-    #
-    def attach(mod, mname)
-      invoker = self
-      params = "*args"
-      call = "call"
-      mod.module_eval <<-code
-      @@#{mname} = invoker
-      def self.#{mname}(#{params})
-        @@#{mname}.#{call}(#{params})
-      end
-      def #{mname}(#{params})
-        @@#{mname}.#{call}(#{params})
-      end
-      code
-      invoker
+    # @return [Boolean]
+    def size_limit?
+      size != LONG_MAX
     end
   end
 end

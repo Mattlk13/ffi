@@ -1,4 +1,4 @@
-# Ruby-FFI https://github.com/ffi/ffi/wiki [![Build Status](https://travis-ci.org/ffi/ffi.svg?branch=master)](https://travis-ci.org/ffi/ffi) [![Build status Windows](https://ci.appveyor.com/api/projects/status/r8wxn1sd4s794gg1/branch/master?svg=true)](https://ci.appveyor.com/project/larskanis/ffi-aofqa/branch/master)
+# Ruby-FFI https://github.com/ffi/ffi/wiki [![Build Status](https://travis-ci.com/ffi/ffi.svg?branch=master)](https://travis-ci.com/ffi/ffi) [![Build status Windows](https://ci.appveyor.com/api/projects/status/r8wxn1sd4s794gg1/branch/master?svg=true)](https://ci.appveyor.com/project/larskanis/ffi-aofqa/branch/master)
 
 ## Description
 
@@ -62,13 +62,25 @@ On JRuby and TruffleRuby, there are no requirements to install the FFI gem, and 
 From rubygems:
 
     [sudo] gem install ffi
+    
+From a Gemfile using git or GitHub
+
+    gem 'ffi', github: 'ffi/ffi', submodules: true
 
 or from the git repository on github:
 
     git clone git://github.com/ffi/ffi.git
-    git submodule update --init --recursive
     cd ffi
+    git submodule update --init --recursive
+    bundle install
     rake install
+
+### Install options:
+
+* `--enable-system-libffi` : Force usage of system libffi
+* `--disable-system-libffi` : Force usage of builtin libffi
+* `--enable-libffi-alloc` : Force closure allocation by libffi
+* `--disable-libffi-alloc` : Force closure allocation by builtin method
 
 ## License
 

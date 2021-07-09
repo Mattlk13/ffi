@@ -171,7 +171,6 @@ describe "Pointer" do
     end
 
     it "access beyond bounds should raise IndexError" do
-      skip "not yet supported on TruffleRuby" if RUBY_ENGINE == "truffleruby"
       expect { @mptr.slice(4, 4).get_int(4) }.to raise_error(IndexError)
     end
   end
@@ -228,6 +227,16 @@ describe "Pointer" do
       expect(pointer.read_int32).to eq(16909060)
     end
   end if RUBY_ENGINE != "truffleruby"
+
+  describe "#size_limit?" do
+    it "should not have size limit" do
+      expect(FFI::Pointer.new(0).size_limit?).to be false
+    end
+
+    it "should have size limit" do
+      expect(FFI::Pointer.new(0).slice(0, 10).size_limit?).to be true
+    end
+  end
 end
 
 describe "AutoPointer" do

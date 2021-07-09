@@ -282,6 +282,17 @@ rbffi_Function_ForProc(VALUE rbFunctionInfo, VALUE proc)
     return callback;
 }
 
+#if !defined(_WIN32) && defined(DEFER_ASYNC_CALLBACK)
+static void
+after_fork_callback(void)
+{
+    /* Ensure that a new dispatcher thread is started in a forked process */
+    async_cb_thread = Qnil;
+    pthread_mutex_init(&async_cb_mutex, NULL);
+    pthread_cond_init(&async_cb_cond, NULL);
+}
+#endif
+
 static VALUE
 function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
 {
@@ -309,7 +320,16 @@ function_init(VALUE self, VALUE rbFunctionInfo, VALUE rbProc)
 
 #if defined(DEFER_ASYNC_CALLBACK)
         if (async_cb_thread == Qnil) {
+
+#if !defined(_WIN32)
+            if( pthread_atfork(NULL, NULL, after_fork_callback) ){
+                rb_warn("FFI: unable to register fork callback");
+            }
+#endif
+
             async_cb_thread = rb_thread_create(async_cb_event, NULL);
+            /* Name thread, for better debugging */
+            rb_funcall(async_cb_thread, rb_intern("name="), 1, rb_str_new2("FFI Callback Dispatcher"));
         }
 #endif
 
@@ -525,7 +545,9 @@ async_cb_event(void* unused)
         rb_thread_call_without_gvl(async_cb_wait, &w, async_cb_stop, &w);
         if (w.cb != NULL) {
             /* Start up a new ruby thread to run the ruby callback */
-            rb_thread_create(async_cb_call, w.cb);
+            VALUE new_thread = rb_thread_create(async_cb_call, w.cb);
+            /* Name thread, for better debugging */
+            rb_funcall(new_thread, rb_intern("name="), 1, rb_str_new2("FFI Callback Runner"));
         }
     }
 
@@ -711,7 +733,6 @@ invoke_callback(VALUE data)
                 break;
 
             case NATIVE_FUNCTION:
-            case NATIVE_CALLBACK:
             case NATIVE_STRUCT:
                 param = rbffi_NativeValue_ToRuby(paramType, rbParamType, parameters[i]);
                 break;
@@ -787,7 +808,6 @@ invoke_callback(VALUE data)
             break;
 
         case NATIVE_FUNCTION:
-        case NATIVE_CALLBACK:
             if (TYPE(rbReturnValue) == T_DATA && rb_obj_is_kind_of(rbReturnValue, rbffi_PointerClass)) {
 
                 *((void **) retval) = ((AbstractMemory *) DATA_PTR(rbReturnValue))->address;
@@ -844,7 +864,7 @@ callback_prep(void* ctx, void* code, Closure* closure, char* errmsg, size_t errm
     FunctionType* fnInfo = (FunctionType *) ctx;
     ffi_status ffiStatus;
 
-    ffiStatus = ffi_prep_closure_loc(code, &fnInfo->ffi_cif, callback_invoke, closure, code);
+    ffiStatus = ffi_prep_closure_loc(closure->pcl, &fnInfo->ffi_cif, callback_invoke, closure, code);
     if (ffiStatus != FFI_OK) {
         snprintf(errmsg, errmsgsize, "ffi_prep_closure_loc failed.  status=%#x", ffiStatus);
         return false;

@@ -1,3 +1,94 @@
+1.15.3 / 2021-06-16
+-------------------
+
+Fixed:
+* Fix temporary packaging issue with libffi. #904
+
+
+1.15.2 / 2021-06-16
+-------------------
+
+Added:
+* Add support for Windows MINGW-UCRT build. #903
+* Add `/opt/homebrew/lib/` to fallback search paths to improve homebrew support. #880 #882
+
+Changed:
+* Regenerate `types.conf` for FreeBSD12 aarch64. #902
+
+
+1.15.1 / 2021-05-22
+-------------------
+
+Fixed:
+* Append -pthread to linker options. #893
+* Use arm or aarch64 to identify Apple ARM CPU arch. #899
+* Allow overriding `gcc` with the `CC` env var in `const_generator.rb` and `struct_generator.rb`. #897
+
+
+1.15.0 / 2021-03-05
+-------------------
+
+Fixed:
+* Fix MSVC build
+* Fix async callbacks in conjunction with fork(). #884
+
+Added:
+* Allow to pass callbacks in varargs. #885
+* Name the threads for FFI callback dispatcher and async thread calls for easier debugging. #883
+  The name can be retrieved by Thread.name and is shown by Thread.list.inspect etc.
+  Even gdb shows the thread name on supported operating systems.
+* Add types.conf for powerpc64le-linux
+* Add types.conf for riscv64-linux
+* More release automation of ffi gems
+
+Changed:
+* Switch from rubygems-tasks to bundler/gem_helper
+
+Removed:
+* Remove unused VariadicInvoker#init
+
+
+1.14.2 / 2020-12-21
+-------------------
+
+Fixed:
+* Fix builtin libffi on newer Ubuntu caused by an outdated Makefile.in . #863
+
+
+1.14.1 / 2020-12-19
+-------------------
+
+Changed:
+* Revert changes to FFI::Pointer#write_string made in ffi-1.14.0.
+  It breaks compatibilty in a way that can cause hard to find errors. #857
+
+
+1.14.0 / 2020-12-18
+-------------------
+
+Added:
+* Add types.conf for x86_64-msys, x86_64-haiku, aarch64-openbsd and aarch64-darwin (alias arm64-darwin)
+* Add method AbstractMemory#size_limit? . #829
+* Add new extconf option --enable-libffi-alloc which is enabled per default on Apple M1 (arm64-darwin).
+
+Changed:
+* Do NULL pointer check only when array length > 0 . #305
+* Raise an error on an unknown order argument. #830
+* Change FFI::Pointer#write_string to terminate with a NUL byte like other string methods. #805
+* Update bundled libffi to latest master.
+
+Removed:
+* Remove win32/stdint.h and stdbool.h because of copyright issue.  #693
+
+Fixed:
+* Fix possible UTF-8 load error in loader script interpretation. #792
+* Fix segfault on non-array argument to #write_array_of_*
+* Fix memory leak in MethodHandle . #815
+* Fix possible segfault in combination with fiddle or other libffi using gems . #835
+* Fix possibility to use ffi ruby gem with JRuby-9.3 . #763
+* Fix a GC issue, when a callback Proc is used on more than 2 callback signatures. #820
+
+
 1.13.1 / 2020-06-09
 -------------------
 
