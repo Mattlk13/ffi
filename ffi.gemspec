@@ -22,7 +22,9 @@ Gem::Specification.new do |s|
   end
 
   # Add libffi git files
-  lfs = `git --git-dir ext/ffi_c/libffi/.git ls-files -z`.split("\x0")
+  lfs = `git --git-dir ext/ffi_c/libffi/.git ls-files -z`.split("\x0").reject do |f|
+    f =~ /^(\.|testsuite)/
+  end
   # Add autoconf generated files of libffi
   lfs += %w[ compile configure config.guess config.sub install-sh ltmain.sh missing fficonfig.h.in ]
   # Add automake generated files of libffi
